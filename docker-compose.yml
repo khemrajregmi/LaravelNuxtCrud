@@ -1,0 +1,57 @@
+version: '3.8'
+
+name: jobleads
+services:
+    app:
+        container_name: test-api
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            - "8000:8000"
+        volumes:
+            - .:/var/www/html
+        depends_on:
+            mysql:
+                condition: service_healthy
+        networks:
+            - majorit-network
+
+    mysql:
+        container_name: test-mysql
+        image: mysql:8.0
+        ports:
+            - "3306:3306"
+        environment:
+            MYSQL_DATABASE: myappdb
+            MYSQL_USER: user
+            MYSQL_PASSWORD: password
+            MYSQL_ROOT_PASSWORD: rootpassword
+        volumes:
+            - mysql_data:/var/lib/mysql
+        healthcheck:
+            test: ["CMD-SHELL", "mysqladmin ping -h localhost -uuser -ppassword"]
+            interval: 10s
+            timeout: 10s
+            retries: 5
+        networks:
+            - majorit-network
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: test-phpmyadmin
+        environment:
+            PMA_HOST: mysql
+            MYSQL_ROOT_PASSWORD: rootpassword
+        ports:
+            - "8080:80"
+        depends_on:
+            - mysql
+        networks:
+            - majorit-network
+
+networks:
+    majorit-network:
+
+volumes:
+    mysql_data:
